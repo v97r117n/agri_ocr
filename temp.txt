@@ -1,0 +1,152 @@
+// Detect source if from Google News aggregator
+function detectSource(title, defaultSource) {
+  const text = title.toLowerCase();
+  if (text.endsWith('eenadu')) return 'Eenadu';
+  if (text.endsWith('sakshi')) return 'Sakshi';
+  if (text.endsWith('the hindu')) return 'The Hindu';
+  if (text.endsWith('deccan chronicle')) return 'Deccan Chronicle';
+  if (text.endsWith('times of india')) return 'Times of India';
+  if (text.endsWith('indian express') || text.endsWith('the indian express')) return 'Indian Express';
+  if (text.endsWith('andhra jyothy') || text.endsWith('andhrajyothy')) return 'Andhra Jyothy';
+  if (text.endsWith('andhra prabha')) return 'Andhra Prabha';
+  if (text.endsWith('prajasakti') || text.endsWith('prajasakthi')) return 'Prajasakti';
+  if (text.endsWith(// Strict positive-match filter: article must be clearly about Andhra Pradesh Agriculture
+// OR contain generic agriculture content (for Telugu feeds) while NOT being about another specific state.
+function isRelatedToAP(title, snippet, language) {
+  const text = `${title} ${snippet || ''}`.toLowerCase();
+
+  // ── AP State & District Keywords (must match at least one for English articles) ──
+  const apKeywords = [
+    // State names & regions
+    'andhra pradesh', 'andhra', ' ap ', '(ap)', 'ap.', 'ap,', 'ap;', 'rayalaseema', 'coastal andhra', 'uttarandhra',
+    // Capital & major cities / districts & HQs
+    'amaravati', 'guntur', 'vijayawada', 'visakhapatnam', 'vizag', 'nellore',
+    'kurnool', 'anantapur', 'anantapuramu', 'kadapa', 'ysr kadapa', 'cuddapah',
+    'chittoor', 'ongole', 'srikakulam', 'vizianagaram', 'eluru', 'kakinada',
+    'rajamahendravaram', 'rajahmundry', 'tirupati', 'narasaraopet', 'bapatla',
+    'palnadu', 'konaseema', 'nandyal', 'sri city', 'sricity', 'srikalahasti',
+    'madanapalle', 'hindupur', 'tadipatri', 'mangalagiri', 'tadepalligudem',
+    'bhimavaram', 'amalapuram', 'narasapuram', 'palasa', 'bobbili', 'tekkali',
+    'palakonda', 'parvathipuram', 'manyam', 'sri sathya sai', 'sathya sai',
+    'puttaparthi', 'annamayya', 'rayachoty', 'ntr', 'krishna', 'machilipatnam',
+    'west godavari', 'paschima godavari', 'east godavari', 'thoorpu godavari',
+    'anakapalli', 'anakapalle', 'alluri sitharama raju', 'asr district', 'paderu',
+    // Major towns / places
+    'tenali', 'dharmavaram', 'proddatur', 'kavali', 'gudur', 'chirala', 'tadpatri', 'adoni',
+    // AP politicians & govt
+    'chandrababu', 'naidu', 'lokesh', 'pawan kalyan', 'achannaidu', 'nimmala',
+    'ramanaidu', 'jagan', 'ysrcp', 'tdp', 'janasena', 'ap government', 'ap cm',
+    'ap minister', 'ap agriculture', 'ap state', 'ap rythu',
+    // Telugu – State names & districts & towns
+    'ఆంధ్రప్రదేశ్', 'ఆంధ్ర ప్రదేశ్', 'ఆంధ్ర', 'రాయలసీమ', 'కోస్తా', 'ఉత్తరాంధ్ర',
+    'అమరావతి', 'గుంటూరు', 'విజయవాడ', 'విశాఖపట్నం', 'వైజాగ్', 'నెల్లూరు', 'కర్నూలు',
+    'అనంతపురం', 'కడప', 'చిత్తూరు', 'ఒంగోలు', 'శ్రీకాకుళం', 'విజయనగరం', 'ఏలూరు',
+    'కాకినాడ', 'రాజమండ్రి', 'రాజమహేంద్రవరం', 'తిరుపతి', 'నందయాల', 'బాపట్ల', 'పల్నాడు',
+    'కోనసీమ', 'శ్రీ సత్యసాయి', 'సత్యసాయి', 'పుట్టపర్తి', 'అన్నమయ్య', 'రాయచోటి',
+    'ఎన్టీఆర్', 'కృష్ణా', 'మచిలీపట్నం', 'పశ్చిమ గోదావరి', 'పశ్చిమగోదావరి', 'తూర్పు గోదావరి',
+    'తూర్పుగోదావరి', 'అమలాపురం', 'అనకాపల్లి', 'అల్లూరి సీతారామరాజు', 'పాడేరు',
+    'పార్వతీపురం', 'మన్యం', 'నంద్యాల', 'మంగళగిరి', 'భీమవరం', 'తాడేపల్లిగూడెం',
+    'తెనాలి', 'హిందూపురం', 'మదనపల్లె', 'ధర్మవరం', 'ప్రొద్దుటూరు', 'కావలి', 'గూడూరు',
+    'చీరాల', 'తాడిపత్రి', 'ఆదోని',
+    // Telugu – AP politicians
+    'చంద్రబాబు', 'నారా లోకేష్', 'లోకేష్', 'పవన్కళ్యాణ్', 'పవన్ కళ్యాణ్', 'పవన్ కల్యాణ్',
+    'అచ్చెన్నాయుడు', 'నిమ్మల', 'రామ నాయుడు', 'వైఎస్ జగన్', 'జగన్', 'జగన్మోహన్ రెడ్డి',
+    'రాష్ట్ర ప్రభుత్వం', 'రాష్ట్ర వ్యవసాయ శాఖ', 'ఏపీ రైతు', 'ఏపీ ప్రభుత్వం',
+    'ఆంధ్రప్రదేశ్ ప్రభుత్వం', 'వ్యవసాయ శాఖ'
+  ];
+
+  // ── Other Indian states that should NOT match (prevent false positives) ──
+  const otherStateKeywords = [
+    'telangana', 'karnataka', 'tamil nadu', 'kerala', 'maharashtra',
+    'gujarat', 'rajasthan', 'uttar pradesh', 'madhya pradesh', 'odisha',
+    'jharkhand', 'bihar', 'west bengal', 'assam', 'punjab', 'haryana',
+    'chhattisgarh', 'himachal', 'uttarakhand', 'goa',
+    'gulbarga', 'belgaum', 'mysore', 'bengaluru', 'bangalore', 'mangalore',
+    'hyderabad', 'warangal', 'nizamabad', 'karimnagar', 'khammam', 'nalgonda', 'secunderabad',
+    'తెలంగాణ', 'కర్నాటక', 'తమిళనాడు', 'కేరళ', 'మహారాష్ట్ర',
+    'గుల్బర్గా', 'బెంగళూరు', 'హైదరాబాద్', 'వరంగల్', 'నిజామాబాద్', 'కరీంనగర్', 'ఖమ్మం', 'నల్గొండ'
+  ];
+
+  // ── Core agriculture terms ──
+  const agriKeywords = [
+    'farmer', 'farming', 'agriculture', 'crop', 'paddy', 'cotton', 'rice',
+    'seed', 'harvest', 'yield', 'cultivation', 'fertilizer', 'pesticide',
+    'irrigation', 'groundnut', 'sugarcane', 'mango', 'soil', 'rabi', 'kharif',
+    'msp', 'minimum support price', 'rythu', 'ryot', 'sowing', 'plantation',
+    'nursery', 'farm', 'horticulture', 'aquaculture', 'poultry', 'livestock',
+    'dairy', 'shrimp', 'fish', 'prawn', 'sericulture', 'floriculture',
+    'organic farming', 'chilli', 'tobacco', 'maize', 'millet', 'pulse',
+    'vegetable', 'fruit', 'canal', 'dam', 'borewell', 'drip', 'sprinkler',
+    'urea', 'manure', 'chemical', 'potash', 'phosphate', 'monsoon', 'rainfall',
+    'drought', 'pest', 'infestation', 'subsid', 'compensation', 'loan',
+    'crop insurance', 'bima', 'bharosa', 'rythu bharosa', 'e-crop', 'e-karshak',
+    'mandis', 'market yard', 'apmc',
+    // Telugu terms
+    'వ్యవసాయం', 'రైతు', 'పంట', 'ఎరువులు', 'పురుగుల మందు', 'పురుగులమందు',
+    'విత్తనాలు', 'సాగు', 'ధాన్యం', 'వరి', 'పత్తి', 'ఖరీఫ్', 'రబీ', 'దిగుబడి',
+    'నీటి పారుదల', 'నీటిపారుదల', 'వరి నాట్లు', 'నాట్లు', 'తోట', 'ఉద్యానవన',
+    'మత్స్య', 'రొయ్య', 'చేప', 'కోళ్ల', 'పశు', 'పాల', 'రైతు భరోసా', 'ఋణాలు',
+    'రుణాలు', 'రుణ మాఫీ', 'రుణమాఫీ', 'సబ్సిడీ', 'పంట నష్టం', 'భీమా', 'ఈ-క్రాప్'
+  ];
+
+  // 1. MUST have agricultural keywords
+  const hasAgriKeyword = agriKeywords.some(kw => text.includes(kw));
+  if (!hasAgriKeyword) {
+    return false;
+  }
+
+  // 2. Check AP keywords and other states
+  const titleOnly = title.toLowerCase();
+  const hasAPInTitle = apKeywords.some(kw => titleOnly.includes(kw));
+  const hasAPKeyword = apKeywords.some(kw => text.includes(kw));
+  const hasOtherState = otherStateKeywords.some(kw => text.includes(kw));
+
+  // If explicitly has AP in the title, it's highly relevant even if it mentions other states in snippet
+  if (hasAPInTitle) {
+    return true;
+  }
+
+  // If it mentions other states and doesn't have AP in the title, exclude it to avoid false positives
+  if (hasOtherState) {
+    return false;
+  }
+
+  // If it's English, it MUST mention AP somewhere
+  const lang = language ? language.toLowerCase() : 'english';
+  if (lang !== 'telugu') {
+    return hasAPKeyword;
+  }
+
+  // For Telugu, if we reached here, it has agri keywords, doesn't mention other states, so we keep it as general local info
+  return true;
+}��ు', 'సాగు',
+    'ధాన్యం', 'వరి', 'పత్తి', 'ఖరీఫ్', 'రబీ', 'దిగుబడి', 'నీటి పారుదల'
+  ];
+
+  const hasAPKeyword    = apKeywords.some(kw => text.includes(kw));
+  const hasOtherState   = otherStateKeywords.some(kw => text.includes(kw));
+  const hasAgriKeyword  = agriKeywords.some(kw => text.includes(kw));
+
+  // Also check title only (stronger AP signal)
+  const titleOnly = title.toLowerCase();
+  const hasAPInTitle = apKeywords.some(kw => titleOnly.includes(kw));
+
+  // Rule 1a – Explicitly about AP in the title → always include
+  if (hasAPInTitle) return true;
+
+  // Rule 1b – Mentions AP somewhere AND mentions another state → only keep if AP is primary (in title)
+  if (hasAPKeyword && hasOtherState) return false;
+
+  // Rule 1c – Mentions AP with no other state → include
+  if (hasAPKeyword && !hasOtherState) return true;
+
+  // Rule 2 – Mentions another specific state (no AP at all) → exclude
+  if (hasOtherState) return false;
+
+  // Rule 3 – Generic agriculture content with no state mentioned → include
+  if (hasAgriKeyword) return true;
+
+  // Rule 4 – Nothing matched → exclude
+  return false;
+}
+

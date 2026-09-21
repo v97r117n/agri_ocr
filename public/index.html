@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andhra Pradesh Agriculture News Hub</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Telugu:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+  <!-- Top Bar / Header -->
+  <header class="app-header">
+    <div class="header-logo">
+      <div class="logo-text">
+        <h1>Andhra Pradesh Agriculture News Hub</h1>
+        <p>ఆంధ్రప్రదేశ్ వ్యవసాయ వార్తల డ్యాష్‌బోర్డ్</p>
+      </div>
+    </div>
+    
+    <div class="header-controls">
+      <div class="sync-status">
+        <span class="status-indicator online"></span>
+        <span id="last-updated-text">Last sync: Loading...</span>
+      </div>
+      <button id="refresh-btn" class="btn btn-secondary" title="Sync news now">
+        <i class="fa-solid fa-arrows-rotate"></i> Sync News
+      </button>
+      <button id="theme-toggle" class="btn btn-icon" title="Toggle dark/light theme">
+        <i class="fa-solid fa-sun"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Live Market Ticker -->
+  <section class="ticker-section">
+    <div class="ticker-label">
+      <i class="fa-solid fa-chart-line"></i> Live AP Mandi Prices (ఈరోజు మార్కెట్ ధరలు)
+    </div>
+    <div class="ticker-wrapper">
+      <div class="ticker-content" id="price-ticker">
+        <span><strong class="crop-name">Paddy (వరి) - Common:</strong> ₹2,300/Qtl <i class="fa-solid fa-caret-up text-green"></i></span>
+        <span><strong class="crop-name">Paddy (వరి) - Grade A:</strong> ₹2,320/Qtl <i class="fa-solid fa-caret-up text-green"></i></span>
+        <span><strong class="crop-name">Red Chilli (ఎండు మిర్చి) - Guntur:</strong> ₹19,500/Qtl <i class="fa-solid fa-caret-down text-red"></i></span>
+        <span><strong class="crop-name">Cotton (పత్తి):</strong> ₹7,520/Qtl <i class="fa-solid fa-caret-up text-green"></i></span>
+        <span><strong class="crop-name">Groundnut (వేరుశనగ):</strong> ₹6,850/Qtl <i class="fa-solid fa-minus text-gray"></i></span>
+        <span><strong class="crop-name">Bengal Gram (శనగలు):</strong> ₹5,400/Qtl <i class="fa-solid fa-caret-up text-green"></i></span>
+        <span><strong class="crop-name">Maize (మొక్కజొన్న):</strong> ₹2,225/Qtl <i class="fa-solid fa-caret-up text-green"></i></span>
+      </div>
+    </div>
+  </section>
+
+  <main class="dashboard-layout">
+    <!-- Left Sidebar: Filters & Widgets -->
+    <aside class="sidebar">
+      <!-- Search Widget -->
+      <div class="widget card">
+        <h3><i class="fa-solid fa-magnifying-glass"></i> Search Articles</h3>
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search crop, fertilizer, scheme...">
+          <i class="fa-solid fa-search input-icon"></i>
+        </div>
+      </div>
+
+      <!-- Filters Widget -->
+      <div class="widget card">
+        <h3><i class="fa-solid fa-filter"></i> Filters</h3>
+        
+        <!-- Language Filter -->
+        <div class="filter-group">
+          <label>Language / భాష</label>
+          <div class="segmented-control" id="lang-filter">
+            <button class="active" data-lang="all">All</button>
+            <button data-lang="Telugu">తెలుగు</button>
+            <button data-lang="English">English</button>
+          </div>
+        </div>
+
+        <!-- Sources Filter -->
+        <div class="filter-group">
+          <label>News Sources / పత్రికలు</label>
+          <div class="checkbox-group" id="source-filter">
+            <label class="checkbox-label">
+              <input type="checkbox" value="Eenadu" checked>
+              <span class="custom-checkbox color-eenadu"></span> Eenadu (ఈనాడు)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Sakshi" checked>
+              <span class="custom-checkbox color-sakshi"></span> Sakshi (సాక్షి)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Andhra Jyothy" checked>
+              <span class="custom-checkbox color-aj"></span> Andhra Jyothy (ఆంధ్రజ్యోతి)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Andhra Prabha" checked>
+              <span class="custom-checkbox color-ap"></span> Andhra Prabha (ఆంధ్రప్రభ)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Prajasakti" checked>
+              <span class="custom-checkbox color-ps"></span> Prajasakti (ప్రజాశక్తి)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Suryaa" checked>
+              <span class="custom-checkbox color-su"></span> Suryaa (సూర్య)
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="The Hindu" checked>
+              <span class="custom-checkbox color-hindu"></span> The Hindu
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Deccan Chronicle" checked>
+              <span class="custom-checkbox color-dc"></span> Deccan Chronicle
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Times of India" checked>
+              <span class="custom-checkbox color-toi"></span> Times of India
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="Indian Express" checked>
+              <span class="custom-checkbox color-ie"></span> Indian Express
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" value="National/Other" checked>
+              <span class="custom-checkbox color-other"></span> National/Other
+            </label>
+          </div>
+        </div>
+
+        <!-- Categories Filter -->
+        <div class="filter-group">
+          <label>Categories / విభాగాలు</label>
+          <div class="radio-group" id="category-filter">
+            <button class="category-btn active" data-category="all">All News</button>
+            <button class="category-btn" data-category="Crops & Cultivation">Crops & Cultivation</button>
+            <button class="category-btn" data-category="Fertilizers & Inputs">Fertilizers & Inputs</button>
+            <button class="category-btn" data-category="Government Schemes & Dept">Schemes & Department</button>
+            <button class="category-btn" data-category="General Agriculture">General Info</button>
+          </div>
+        </div>
+
+        <!-- Date Filter -->
+        <div class="filter-group">
+          <label>Time Period / కాలక్రమం</label>
+          <select id="date-filter" class="form-select">
+            <option value="all">All Dates</option>
+            <option value="today">Today (ఈరోజు)</option>
+            <option value="yesterday">Yesterday (నిన్న)</option>
+            <option value="week">Past 7 Days</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- AP Weather Widget -->
+      <div class="widget card weather-widget">
+        <h3><i class="fa-solid fa-cloud-sun"></i> AP Agri-Weather</h3>
+        <div class="weather-district-select">
+          <select id="weather-city-select" class="form-select-sm">
+            <option value="amaravati">Amaravati (Capital)</option>
+            <option value="guntur">Guntur (Spices Belt)</option>
+            <option value="anantapur">Anantapur (Arid Belt)</option>
+            <option value="kurnool">Kurnool (Rayalaseema)</option>
+            <option value="visakhapatnam">Visakhapatnam (Coastal)</option>
+          </select>
+        </div>
+        <div class="weather-display" id="weather-loader">
+          <i class="fa-solid fa-spinner fa-spin"></i> Loading weather data...
+        </div>
+        <div class="weather-display hidden" id="weather-content">
+          <div class="weather-main">
+            <div class="weather-icon-large" id="weather-icon">
+              <i class="fa-solid fa-cloud-sun-rain"></i>
+            </div>
+            <div class="weather-temp">
+              <span id="w-temp">--</span>°C
+            </div>
+          </div>
+          <div class="weather-info">
+            <p id="w-condition" class="weather-cond">Partly Cloudy</p>
+            <p class="weather-details">
+              <span><i class="fa-solid fa-droplet"></i> Humidity: <strong id="w-humidity">--%</strong></span>
+              <span><i class="fa-solid fa-wind"></i> Wind: <strong id="w-wind">-- km/h</strong></span>
+            </p>
+          </div>
+          <div class="weather-advisory" id="weather-advisory-text">
+            Advisory: Suitable for crop spraying under calm wind conditions.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Content: Articles & Charts -->
+    <section class="main-content">
+      <!-- Overview Analytics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card card">
+          <div class="stat-data">
+            <h4 id="stat-total-articles">0</h4>
+            <p>Total Articles Tracked</p>
+          </div>
+        </div>
+
+        <div class="stat-card card">
+          <div class="stat-data">
+            <h4 id="stat-today-articles">0</h4>
+            <p>Published Today</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coverage Numbers Section -->
+      <div class="chart-section card">
+        <div class="chart-header">
+          <h3>News Coverage Distribution</h3>
+          <p class="subtitle">Real-time volume analysis of agricultural publications</p>
+        </div>
+        <div id="coverage-numbers" class="coverage-numbers-grid"></div>
+      </div>
+
+      <!-- Articles Grid -->
+      <div class="articles-header">
+        <h2><i class="fa-solid fa-list"></i> Latest Agriculture News</h2>
+        <div class="view-options">
+          <span id="results-count">Showing 0 articles</span>
+        </div>
+      </div>
+
+      <!-- Loader -->
+      <div id="articles-loader" class="loader-container">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+        <p>Gathering agricultural news...</p>
+      </div>
+
+      <!-- No Articles Message -->
+      <div id="no-articles-msg" class="empty-state hidden">
+        <i class="fa-solid fa-folder-open"></i>
+        <h3>No News Articles Found</h3>
+        <p>Try adjusting your search query, selecting different sources, or clicking the Sync News button above.</p>
+      </div>
+
+      <!-- Main News Grid -->
+      <div class="news-grid" id="news-grid-container">
+        <!-- Rendered dynamically in app.js -->
+      </div>
+
+      <!-- Pagination / Load More -->
+      <div class="pagination-container hidden" id="pagination-container">
+        <button id="load-more-btn" class="btn btn-primary">
+          <i class="fa-solid fa-angles-down"></i> Load More Articles
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
