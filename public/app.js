@@ -44,7 +44,11 @@ const elements = {
   newsGridContainer: document.getElementById('news-grid-container'),
   paginationContainer: document.getElementById('pagination-container'),
   loadMoreBtn: document.getElementById('load-more-btn'),
-  resultsCount: document.getElementById('results-count')
+  resultsCount: document.getElementById('results-count'),
+  textModal: document.getElementById('text-modal'),
+  modalClose: document.getElementById('modal-close'),
+  modalTitle: document.getElementById('modal-title'),
+  modalText: document.getElementById('modal-text')
 };
 
 // ==========================================================================
@@ -187,6 +191,55 @@ function setupEventListeners() {
   elements.weatherCitySelect.addEventListener('change', (e) => {
     fetchWeather(e.target.value);
   });
+
+  // Modal Close
+  elements.modalClose.addEventListener('click', hideModal);
+  elements.textModal.addEventListener('click', (e) => {
+    if (e.target === elements.textModal) hideModal();
+  });
+}
+
+function showModal(article) {
+  console.log("showModal clicked, article:", article);
+  if (!article) {
+    console.error("No article data!");
+    return;
+  }
+  
+  elements.modalTitle.innerText = article.title || "No Title";
+  
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // Create highlighted text
+  let highlightedText = article.text || "No text available.";
+  if (article.matched_keywords && Array.isArray(article.matched_keywords)) {
+    article.matched_keywords.forEach(kw => {
+      if (kw.length > 1) { 
+        try {
+          const escaped = escapeRegExp(kw);
+          const regex = new RegExp(`(${escaped})`, 'gi');
+          highlightedText = highlightedText.replace(regex, '<mark>$1</mark>');
+        } catch (e) {
+          console.warn("Failed to highlight keyword:", kw, e);
+        }
+      }
+    });
+  }
+
+  elements.modalText.innerHTML = `
+    <div class="modal-image-preview">
+      <img src="${article.link}" alt="Page Image" onerror="this.style.display='none'">
+    </div>
+    <div class="modal-text-content">${highlightedText}</div>
+  `;
+  elements.textModal.classList.remove('hidden');
+  console.log("Modal visibility toggled (should be visible)");
+}
+
+function hideModal() {
+  elements.textModal.classList.add('hidden');
 }
 
 // ==========================================================================
@@ -305,7 +358,7 @@ function renderArticlesGrid() {
   elements.resultsCount.innerText = `Showing ${Math.min(endIndex, filteredArticles.length)} of ${filteredArticles.length} articles`;
 
   let htmlContent = '';
-  pageArticles.forEach(article => {
+  pageArticles.forEach((article, index) => {
     // Determine source badge color class
     let badgeClass = 'badge-other';
     if (article.source === 'Eenadu') badgeClass = 'badge-eenadu';
@@ -324,31 +377,47 @@ function renderArticlesGrid() {
     const dateFormatted = pubDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
     const timeFormatted = pubDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    const isOcr = article.source.startsWith('OCR');
+    const readAction = isOcr 
+      ? `<button class="news-read-link ocr-modal-trigger" data-index="${index}">View Full Text <i class="fa-solid fa-file-lines"></i></button>`
+      : `<a href="${article.link}" target="_blank" rel="noopener noreferrer" class="news-read-link">Read Full <i class="fa-solid fa-arrow-right-long"></i></a>`;
+
+    const titleHtml = isOcr
+      ? `<span class="ocr-title-trigger" data-index="${index}">${article.title}</span>`
+      : `<a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>`;
+
     htmlContent += `
       <article class="news-card">
         <div class="news-card-meta">
           <span class="news-source-plain">${article.source}</span>
           <span class="news-date-badge">
-            <i class="fa-regular fa-clock"></i> ${dateFormatted} at ${timeFormatted}
+            <i class="fa-regular fa-clock"></i> ${dateFormatted}
           </span>
         </div>
         <div class="news-card-body">
-          <h3 class="news-card-title">
-            <a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
-          </h3>
-          <p class="news-card-snippet">${article.snippet || 'Click read full article to read more details about this agricultural development...'}</p>
+          <h3 class="news-card-title">${titleHtml}</h3>
+          <p class="news-card-snippet">${article.snippet || 'Click view full text to read details...'}</p>
         </div>
         <div class="news-card-footer">
           <span class="news-tag" title="Article Category">${article.category}</span>
-          <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="news-read-link">
-            Read Full <i class="fa-solid fa-arrow-right-long"></i>
-          </a>
+          ${readAction}
         </div>
       </article>
     `;
   });
 
   elements.newsGridContainer.innerHTML = htmlContent;
+
+  // Add event listeners for modal triggers
+  document.querySelectorAll('.ocr-modal-trigger, .ocr-title-trigger').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const idx = e.currentTarget.getAttribute('data-index');
+      const article = pageArticles[idx];
+      if (article) {
+        showModal(article);
+      }
+    });
+  });
 
   // Show pagination if more items exist
   if (endIndex < filteredArticles.length) {

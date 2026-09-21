@@ -331,19 +331,30 @@ app.get('/api/news/with-ocr', (req, res) => {
     const ocrPath = path.join(__dirname, 'output', 'agriculture.json');
     if (fs.existsSync(ocrPath)) {
       const ocrData = JSON.parse(fs.readFileSync(ocrPath, 'utf8'));
-      const ocrArticles = ocrData.map(r => ({
-        title: `[OCR] ${r.edition} - Page ${r.page_index}`,
-        snippet: r.text.substring(0, 300),
-        text: r.text,
-        link: r.image_path,
-        pubDate: new Date(r.date).toISOString(),
-        source: `OCR (${r.edition})`,
-        language: 'Telugu',
-        category: r.category || 'General Agriculture',
-        scrapedDate: new Date().toISOString(),
-        is_agriculture: r.is_agriculture,
-        matched_keywords: r.matched_keywords || []
-      }));
+      const ocrArticles = ocrData.map(r => {
+        const [day, month, year] = r.date.split('/').map(Number);
+        const pubDate = new Date(year, month - 1, day).toISOString();
+        const pubDateStr = new Date(year, month - 1, day).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        const editionType = r.eid === '2' ? 'Main Edition' : 'District Edition';
+        const snippetPrefix = `📰 ${r.edition} (${editionType}) | Published: ${pubDateStr}\n\n`;
+        return {
+          title: `[OCR] ${r.edition} - Page ${r.page_index} (${pubDateStr})`,
+          snippet: snippetPrefix + r.text.substring(0, 250),
+          text: r.text,
+          link: r.image_path,
+          pubDate: pubDate,
+          source: `OCR (${r.edition})`,
+          language: 'Telugu',
+          category: r.category || 'General Agriculture',
+          scrapedDate: new Date().toISOString(),
+          is_agriculture: r.is_agriculture,
+          matched_keywords: r.matched_keywords || [],
+          editionType: editionType,
+          editionName: r.edition,
+          pageNo: r.page_index,
+          publishedDate: pubDateStr
+        };
+      });
       allArticles = [...ocrArticles, ...allArticles];
       allArticles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
     }

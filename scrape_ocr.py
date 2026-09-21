@@ -109,8 +109,15 @@ def classify_agriculture(text, keywords, min_matches):
 
 
 def thumbnail_count(page):
-    page.wait_for_selector(".owl-item", timeout=20000)
-    return page.locator(".owl-item .item, .owl-item img.imgTitleBelow").count()
+    try:
+        page.wait_for_selector(".owl-item", timeout=30000)
+    except Exception as e:
+        print(f"Carousel load timeout or not found: {e}")
+        return 0
+    count = page.locator(".owl-item .item, .owl-item img.imgTitleBelow").count()
+    if count == 0:
+        print("No thumbnails found in carousel")
+    return count
 
 
 def imgmain2_url(page):
@@ -123,8 +130,17 @@ def scrape_edition(browser, date, eid, keywords, min_matches):
     ctx = browser.new_context(viewport={"width": 1400, "height": 900})
     page = ctx.new_page()
     records = []
-    page.goto(page_url(date, eid), wait_until="domcontentloaded", timeout=60000)
+    url = page_url(date, eid)
+    print(f"Loading: {url}")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_load_state("networkidle", timeout=15000)
+    print(f"Page loaded. Waiting for carousel...")
     count = thumbnail_count(page)
+    print(f"Found {count} pages in carousel")
+    
+    if count == 0:
+        ctx.close()
+        return records
 
     seen = set()
     for i in range(count):
@@ -169,7 +185,12 @@ def main():
         browser = p.chromium.launch(headless=not a.headful)
         for date in dates(a.date):
             for eid in eids:
-                all_records.extend(scrape_edition(browser, date, eid, keywords, a.min_keyword_matches))
+                try:
+                    records = scrape_edition(browser, date, eid, keywords, a.min_keyword_matches)
+                    all_records.extend(records)
+                except Exception as e:
+                    print(f"Error scraping {date} edition {eid}: {e}")
+                    continue
         browser.close()
 
     out.write_text(json.dumps(all_records, ensure_ascii=False, indent=2), encoding="utf-8")
